@@ -81,18 +81,19 @@ class WinTerm(object):
             handle = win32.STDERR
         win32.SetConsoleTextAttribute(handle, attrs)
 
-    def get_position(self, handle):
+    def get_cursor_position(self, handle):
         position = win32.GetConsoleScreenBufferInfo(handle).dwCursorPosition
         # Because Windows coordinates are 0-based,
         # and win32.SetConsoleCursorPosition expects 1-based.
         position.X += 1
         position.Y += 1
+        #print ('pos', position.X, position.Y)
         return position
 
     def set_cursor_position(self, position=None, on_stderr=False):
         if position is None:
             # I'm not currently tracking the position, so there is no default.
-            # position = self.get_position()
+            # position = self.get_cursor_position()
             return
         handle = win32.STDOUT
         if on_stderr:
@@ -103,7 +104,7 @@ class WinTerm(object):
         handle = win32.STDOUT
         if on_stderr:
             handle = win32.STDERR
-        position = self.get_position(handle)
+        position = self.get_cursor_position(handle)
         adjusted_position = (position.Y + y, position.X + x)
         win32.SetConsoleCursorPosition(handle, adjusted_position, adjust=False)
 

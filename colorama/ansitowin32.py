@@ -5,7 +5,7 @@ import os
 
 from .ansi import AnsiFore, AnsiBack, AnsiStyle, Style
 from .winterm import WinTerm, WinColor, WinStyle
-from .win32 import windll, winapi_test
+from .win32 import windll, winapi_test, STDOUT
 
 
 winterm = None
@@ -48,6 +48,7 @@ class AnsiToWin32(object):
     '''
     ANSI_CSI_RE = re.compile('\001?\033\[((?:\d|;)*)([a-zA-Z])\002?')     # Control Sequence Introducer
     ANSI_OSC_RE = re.compile('\001?\033\]((?:.|;)*?)(\x07)\002?')         # Operating System Command
+    CURSOR_POSITION = None
 
     def __init__(self, wrapped, convert=None, strip=None, autoreset=False):
         # The wrapped stream (normally sys.stdout or sys.stderr)
@@ -200,6 +201,7 @@ class AnsiToWin32(object):
 
 
     def call_win32(self, command, params):
+        #print('Command:', command)
         if command == 'm':
             for param in params:
                 if param in self.win32_calls:
@@ -219,6 +221,10 @@ class AnsiToWin32(object):
             # A - up, B - down, C - forward, D - back
             x, y = {'A': (0, -n), 'B': (0, n), 'C': (n, 0), 'D': (-n, 0)}[command]
             winterm.cursor_adjust(x, y, on_stderr=self.on_stderr)
+        elif command in 's':
+            self.CURSOR_POSITION = winterm.get_cursor_position(STDOUT)
+        elif command in 'u':
+            winterm.set_cursor_position((self.CURSOR_POSITION.Y, self.CURSOR_POSITION.X))
 
 
     def convert_osc(self, text):
